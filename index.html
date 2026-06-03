@@ -78,7 +78,10 @@ header p{margin-top:20px;max-width:50ch;font-size:17px;line-height:1.55;color:va
 /* Search panel */
 .search-panel{margin-top:18px;border-top:1px solid var(--line);padding-top:20px;display:none}
 .search-panel.open{display:block;animation:fade .4s var(--ease)}
-#vsearch{width:100%;font-family:var(--sans);font-size:15px;padding:13px 16px;border:1.5px solid var(--g15);border-radius:14px;background:var(--warm);outline:none;color:var(--ink);transition:border-color .3s var(--ease)}
+.search-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+.vlang{font-family:var(--sans);font-size:15px;padding:13px 16px;border:1.5px solid var(--g15);border-radius:14px;background:var(--warm);color:var(--ink);outline:none;cursor:pointer;transition:border-color .3s var(--ease);max-width:100%}
+.vlang:focus{border-color:var(--red)}
+#vsearch{flex:1;min-width:220px;font-family:var(--sans);font-size:15px;padding:13px 16px;border:1.5px solid var(--g15);border-radius:14px;background:var(--warm);outline:none;color:var(--ink);transition:border-color .3s var(--ease)}
 #vsearch:focus{border-color:var(--red)}
 #vsearch::placeholder{color:var(--g25)}
 .vlist{max-height:340px;overflow-y:auto;margin-top:14px;border:1px solid var(--line);border-radius:14px}
@@ -174,7 +177,10 @@ footer .tagline i{font-style:italic}
     <span class="label">Translations</span>
     <div class="chips" id="chips"></div>
     <div class="search-panel" id="searchPanel">
-      <input id="vsearch" type="text" placeholder="Search translations by name, abbreviation, or language..." autocomplete="off">
+      <div class="search-controls">
+        <select id="vlang" class="vlang" aria-label="Filter by language"><option value="">All languages</option></select>
+        <input id="vsearch" type="text" placeholder="Search by name or abbreviation..." autocomplete="off">
+      </div>
       <div class="vlist" id="vlist"></div>
     </div>
   </div>
@@ -308,12 +314,13 @@ function renderChips(){
 }
 function toggle(id){ selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id]; renderChips(); renderResults(); }
 function renderVList(q){
-  const vlist=document.getElementById('vlist'); q=(q||'').toLowerCase().trim(); vlist.innerHTML='';
-  const matches=DATA.versions.filter(v=>!q||v.abbr.toLowerCase().includes(q)||v.name.toLowerCase().includes(q)||(v.lang&&v.lang.toLowerCase().includes(q)));
+  const vlist=document.getElementById('vlist'); q=(q||'').toLowerCase().trim();
+  const lang=document.getElementById('vlang').value; vlist.innerHTML='';
+  const matches=DATA.versions.filter(v=>(!lang||v.lang===lang)&&(!q||v.abbr.toLowerCase().includes(q)||v.name.toLowerCase().includes(q)||(v.lang&&v.lang.toLowerCase().includes(q))));
   if(!matches.length){const e=document.createElement('div');e.className='vrow';e.innerHTML='<span class="nm">No matches</span>';vlist.appendChild(e);return;}
   let curLang=null;
   matches.forEach(v=>{
-    if(v.lang!==curLang){curLang=v.lang;const h=document.createElement('div');h.className='vhead';h.textContent=v.lang;vlist.appendChild(h);}
+    if(!lang&&v.lang!==curLang){curLang=v.lang;const h=document.createElement('div');h.className='vhead';h.textContent=v.lang;vlist.appendChild(h);}
     const r=document.createElement('div'); r.className='vrow'+(selected.includes(v.id)?' sel':'');
     r.innerHTML='<span class="ab">'+v.abbr+'</span><span class="nm">'+v.name+'</span>';
     r.onclick=()=>{toggle(v.id);renderVList(document.getElementById('vsearch').value);}; vlist.appendChild(r);
@@ -361,6 +368,7 @@ refEl.addEventListener('input',()=>{committed=false;renderResults();});
 refEl.addEventListener('keydown',e=>{if(e.key==='Enter'){committed=true;renderResults();}});
 document.getElementById('vsearch').addEventListener('input',e=>renderVList(e.target.value));
 document.querySelectorAll('.examples b').forEach(b=>b.onclick=()=>{const ex=b.getAttribute('data-ex');refEl.value=(refEl.value===ex?'':ex);committed=false;renderResults();refEl.focus();});
+(function(){const sel=document.getElementById('vlang');const seen=[];DATA.versions.forEach(v=>{if(!seen.includes(v.lang)){seen.push(v.lang);const o=document.createElement('option');o.value=v.lang;o.textContent=v.lang;sel.appendChild(o);}});sel.addEventListener('change',()=>renderVList(document.getElementById('vsearch').value));})();
 renderChips(); renderVList(''); renderResults();
 </script>
 </body>
