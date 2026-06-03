@@ -70,6 +70,7 @@ header p{font-family:var(--sans);margin-top:20px;max-width:50ch;font-size:17px;l
 .examples b{font-family:var(--sans);font-size:14px;color:var(--ink);font-weight:600;cursor:pointer;border-bottom:1.5px solid transparent;transition:color .3s var(--ease),border-color .3s var(--ease)}
 .examples b:hover{color:var(--g30);border-color:var(--g30)}
 .examples b:active{color:var(--red);border-color:var(--red)}
+.examples b.on{color:var(--red);border-color:var(--red)}
 
 /* Chips */
 .chips{display:flex;flex-wrap:wrap;gap:9px}
@@ -439,6 +440,7 @@ function renderResults(){
     fb.className='feedback err'; fb.innerHTML='<span class="pill">'+res.errors[0].error+'</span>'+clearBtn;
   } else { fb.innerHTML=''; }
   var _c=document.getElementById('fbClear'); if(_c)_c.onclick=function(){refEl.value='';committed=false;renderResults();refEl.focus();};
+  syncExamples();
   const nT=selected.length, nR=res.refs.length, total=nT*nR;
   countEl.textContent = nT ? (nR>1 ? '\u00b7 '+total+' links' : '\u00b7 '+nT+' translation'+(nT>1?'s':'')) : '';
   resultsEl.innerHTML='';
@@ -475,7 +477,19 @@ document.getElementById('copyAll').onclick=function(){
 };
 refEl.addEventListener('input',()=>{committed=false;renderResults();});
 refEl.addEventListener('keydown',e=>{if(e.key==='Enter'){committed=true;renderResults();}});
-document.querySelectorAll('.examples b').forEach(b=>b.onclick=()=>{const ex=b.getAttribute('data-ex');refEl.value=(refEl.value===ex?'':ex);committed=false;renderResults();refEl.focus();});
+function exSegs(){ return refEl.value.split(/[;\n]+|,(?=\s*(?:[1-3]\s*)?[A-Za-z])/).map(s=>s.trim()).filter(Boolean); }
+function exKey(str){ const p=parseRef(str); return (p&&p.ok)?p.usfm:str.toLowerCase().replace(/\s+/g,''); }
+function syncExamples(){
+  const keys={}; exSegs().forEach(s=>{keys[exKey(s)]=1;});
+  document.querySelectorAll('.examples b').forEach(b=>b.classList.toggle('on', !!keys[exKey(b.getAttribute('data-ex'))]));
+}
+function toggleExample(ex){
+  const segs=exSegs(); const k=exKey(ex); let idx=-1;
+  for(let i=0;i<segs.length;i++){ if(exKey(segs[i])===k){idx=i;break;} }
+  if(idx>-1) segs.splice(idx,1); else segs.push(ex);
+  refEl.value=segs.join('; '); committed=false; renderResults(); refEl.focus();
+}
+document.querySelectorAll('.examples b').forEach(b=>b.onclick=()=>toggleExample(b.getAttribute('data-ex')));
 function buildLangModal(){
   const grid=document.getElementById('langgrid'); grid.innerHTML='';
   (DATA.languages||[]).forEach(l=>{
