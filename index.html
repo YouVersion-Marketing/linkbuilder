@@ -82,6 +82,8 @@ header p{font-family:var(--sans);margin-top:20px;max-width:50ch;font-size:17px;l
 .chip.add{border-style:dashed;border-color:var(--g25);color:var(--g30);background:transparent}
 .chip.add:hover{border-color:var(--red);color:var(--red);background:rgba(255,61,77,.06)}
 .chip.add.open{border-style:solid;border-color:var(--red);color:var(--red);background:rgba(255,61,77,.06)}
+.chip.clear{border-color:transparent;background:transparent;color:var(--g25);font-weight:600}
+.chip.clear:hover{color:var(--ink);background:var(--g5)}
 
 /* Search panel */
 .search-panel{margin-top:18px;border-top:1px solid var(--line);padding-top:20px;display:none}
@@ -405,6 +407,12 @@ function renderChips(){
   syncAdd();
   add.onclick=()=>{const p=document.getElementById('searchPanel');p.classList.toggle('open');syncAdd();};
   chipsEl.appendChild(add);
+  if(selected.length){
+    const clr=document.createElement('button'); clr.type='button'; clr.className='chip clear'; clr.textContent='Clear All';
+    clr.title='Remove all selected translations';
+    clr.onclick=()=>{selected=[];renderChips();renderVList();renderResults();};
+    chipsEl.appendChild(clr);
+  }
 }
 function toggle(id){ selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id]; renderChips(); renderResults(); }
 function renderVList(){
