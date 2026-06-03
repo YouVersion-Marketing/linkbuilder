@@ -274,7 +274,7 @@ footer .tagline i{font-style:italic}
       <div class="how-h">Build your links</div>
       <ol class="how-steps">
         <li><b>Enter a reference</b><span>Type a book, chapter, and verse&mdash;like <code>John 16:33</code>. We check it as you type and show it as a tag below the field.</span></li>
-        <li><b>Add more than one</b><span>Separate references with a semicolon or a new line&mdash;like <code>John 16:33; Matthew 1:1</code>&mdash;to build links for several passages at once.</span></li>
+        <li><b>Add more than one</b><span>Separate references with a comma, semicolon, or a new line&mdash;like <code>John 16:33, Matthew 1:1</code>&mdash;to build links for several passages at once.</span></li>
         <li><b>Choose your translations</b><span>Select the translation chips to add or remove them. Want more? Tap <code>+ More Translations</code>, then <code>Choose a Language</code> to browse 394 versions in 32 languages.</span></li>
         <li><b>Copy or open a link</b><span>Every result has <code>Copy Link</code> and <code>Open</code>. Tap <code>Copy All Links</code> to grab them all at once, one per line.</span></li>
         <li><b>Share it anywhere</b><span>Paste your links into a message, email, or post. Each one opens the verse right in the Bible App on web or mobile.</span></li>
@@ -374,7 +374,7 @@ function buildURL(v, usfm){ return 'https://www.bible.com/bible/'+v.id+'/'+usfm+
 function parseRefs(raw){
   const out={refs:[],errors:[]};
   if(!raw || !raw.trim()) return out;
-  const segs=raw.split(/[;\n]+/).map(s=>s.trim()).filter(Boolean).slice(0,25);
+  const segs=raw.split(/[;\n]+|,(?=\s*(?:[1-3]\s*)?[A-Za-z])/).map(s=>s.trim()).filter(Boolean).slice(0,25);
   const seen={};
   segs.forEach(s=>{
     const p=parseRef(s);
