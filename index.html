@@ -144,6 +144,11 @@ header p{font-family:var(--sans);margin-top:20px;max-width:50ch;font-size:17px;l
 .results-head{display:flex;align-items:center;justify-content:space-between;margin-top:40px;margin-bottom:6px;gap:16px;flex-wrap:wrap}
 .results-head h2{font-family:var(--sans);font-weight:700;font-size:23px;letter-spacing:-.01em}
 .results-head .count{color:var(--g30);font-weight:400;font-size:15px}
+.results-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.reset-btn{font-family:var(--sans);font-size:13.5px;font-weight:600;letter-spacing:.01em;border:1.5px solid transparent;background:transparent;color:var(--g25);padding:8px 16px 8px 13px;cursor:pointer;border-radius:999px;transition:background .3s var(--ease),color .3s var(--ease);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.reset-btn:hover{color:var(--ink);background:var(--g5)}
+.reset-btn[hidden]{display:none}
+.reset-btn .reset-ic{width:16px;height:16px;display:block;flex:none}
 .btn{font-family:var(--sans);font-size:13px;font-weight:700;letter-spacing:.01em;border:1.5px solid var(--red);background:var(--red);color:#fff;padding:11px 20px;cursor:pointer;border-radius:999px;white-space:nowrap;outline:none;transition:background .3s var(--ease),border-color .3s var(--ease),box-shadow .3s var(--ease),opacity .2s}
 .btn:hover{background:var(--ink);border-color:var(--ink);box-shadow:0 2px 12px rgba(18,18,18,.13)}
 .btn:active{background:var(--ink);border-color:var(--ink)}
@@ -249,7 +254,10 @@ footer .tagline i{font-style:italic}
 
   <div class="results-head reveal" style="animation-delay:.25s">
     <h2>Your Links <span class="count" id="count"></span></h2>
-    <button class="btn" id="copyAll">Copy All Links</button>
+    <div class="results-actions">
+      <button class="reset-btn" id="resetBtn" type="button" title="Clear the reference and all selected translations" hidden><svg class="reset-ic" viewBox="15.92 15.72 24.56 24.56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M32.4093 35.8459C32.8908 35.5753 32.9904 34.9443 32.6681 34.4958C32.3458 34.0473 31.7229 33.9516 31.2331 34.2068C26.4372 36.705 20.5654 32.7867 21.0272 27.402L22.0871 27.7335C22.452 27.8476 22.8047 27.5212 22.7225 27.1455L21.8614 23.2115C21.7791 22.8353 21.3226 22.6919 21.0399 22.9533L18.0792 25.6921C17.7964 25.9537 17.8999 26.4239 18.2653 26.5382L19.0812 26.7934C18.1061 33.9999 26.0679 39.4098 32.4093 35.8459Z" fill="currentColor"/><path d="M34.6163 32.5984L33.6 28.7252C33.5028 28.3548 33.8464 28.0174 34.2181 28.1182L34.9906 28.3275C35.2402 22.9984 29.3617 19.3031 24.6664 21.8466C24.1808 22.1097 23.5564 22.0241 23.2269 21.5809C22.8973 21.1377 22.9867 20.5052 23.4637 20.2268C29.6702 16.6048 37.6453 21.7135 36.9587 28.8607L38.111 29.173C38.4826 29.2737 38.6035 29.7367 38.3284 30.0062L35.4519 32.8246C35.1772 33.0938 34.7133 32.9682 34.6163 32.5984Z" fill="currentColor"/></svg>Reset</button>
+      <button class="btn" id="copyAll">Copy All Links</button>
+    </div>
   </div>
   <div id="results" class="reveal" style="animation-delay:.3s"></div>
 </div>
@@ -463,6 +471,7 @@ function renderResults(){
   countEl.textContent = nT ? (nR>1 ? '\u00b7 '+total+' links' : '\u00b7 '+nT+' translation'+(nT>1?'s':'')) : '';
   resultsEl.innerHTML='';
   document.getElementById('copyAll').disabled=!(nR && nT);
+  var _rb=document.getElementById('resetBtn'); if(_rb)_rb.hidden=!(refEl.value.trim()||selected.length);
   if(!nT){resultsEl.innerHTML='<div class="empty">Select at least one translation above.</div>';return;}
   if(!nR){resultsEl.innerHTML='<div class="empty">Enter a valid reference to generate links.</div>';return;}
   const ordered=[...popularIds.filter(id=>selected.includes(id)),...selected.filter(id=>!popularIds.includes(id))];
@@ -492,6 +501,10 @@ document.getElementById('copyAll').onclick=function(){
   const lines=[];
   res.refs.forEach(p=>ordered.forEach(id=>{const v=byId[id]; if(v)lines.push(buildURL(v,p.usfm));}));
   copyText(lines.join('\n'),this,'Copied All');
+};
+document.getElementById('resetBtn').onclick=function(){
+  refEl.value=''; committed=false; selected=[];
+  renderChips(); renderVList(); renderResults(); refEl.focus();
 };
 refEl.addEventListener('input',()=>{committed=false;renderResults();});
 refEl.addEventListener('keydown',e=>{if(e.key==='Enter'){committed=true;renderResults();}});
