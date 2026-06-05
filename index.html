@@ -59,10 +59,12 @@ header p{font-family:var(--sans);margin-top:20px;max-width:50ch;font-size:17px;l
 .feedback:empty{margin-top:0;min-height:0}
 .pill{font-size:13px;line-height:1;letter-spacing:.01em;font-weight:500;background:var(--g5);border:1px solid var(--line);padding:6px 12px;border-radius:10px;corner-shape:squircle;color:var(--ink);display:inline-flex;align-items:center}
 .pill.ref{font-family:var(--sans);font-weight:600}
-.pill.mono{letter-spacing:.04em;color:var(--g30)}
+.pill.mono{letter-spacing:.04em;color:var(--g30);gap:5px;padding-right:7px}
 .pill.canon{background:var(--g40);border-color:var(--g40);color:#fff;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
 .feedback.err .pill{border-color:rgba(255,61,77,.35);background:rgba(255,61,77,.08);color:var(--red-deep)}
 .pill.warn{border-color:rgba(255,61,77,.35);background:rgba(255,61,77,.08);color:var(--red-deep)}
+.pill-x{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin:-3px 0;border:none;background:transparent;color:var(--g25);cursor:pointer;border-radius:999px;padding:0;font-size:15px;line-height:1;transition:background .2s var(--ease),color .2s var(--ease)}
+.pill-x:hover{background:rgba(255,61,77,.12);color:var(--red)}
 .fb-clear{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:none;background:transparent;color:var(--g25);cursor:pointer;border-radius:999px;padding:0;transition:background .2s var(--ease),color .2s var(--ease)}
 .fb-clear:hover{background:var(--g5);color:var(--ink)}
 .fb-clear svg{width:15px;height:15px;display:block}
@@ -452,19 +454,20 @@ function renderResults(){
   fb.className='feedback';
   var clearBtn='<button class="fb-clear" id="fbClear" type="button" aria-label="Clear references"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.768 11.646a.5.5 0 0 0 0 .708l3.182 3.182a1 1 0 0 1-1.414 1.414l-3.182-3.182a.5.5 0 0 0-.708 0L8.464 16.95a1 1 0 1 1-1.414-1.414l3.182-3.182a.5.5 0 0 0 0-.708L7.05 8.464A1 1 0 0 1 8.464 7.05l3.182 3.182a.5.5 0 0 0 .707 0l3.183-3.182a1 1 0 1 1 1.414 1.414l-3.182 3.182Z"/></svg></button>';
   let pills='';
-  if(res.refs.length===1){
-    const p=res.refs[0];
-    pills='<span class="pill mono">'+p.usfm+'</span>';
-  } else if(res.refs.length>1){
-    pills=res.refs.map(p=>'<span class="pill mono">'+p.usfm+'</span>').join('');
+  var monoPill=function(p){return '<span class="pill mono">'+p.usfm+'<button class="pill-x" type="button" data-ref="'+p.usfm+'" aria-label="Remove '+p.usfm+'" title="Remove '+p.usfm+'">\u00d7</button></span>';};
+  if(res.refs.length>=1){
+    pills=res.refs.map(monoPill).join('');
   }
   if(pills){
     let extra='';
     if(committed && res.errors.length){ extra='<span class="pill warn">'+res.errors.length+(res.errors.length>1?' entries':' entry')+' couldn\u2019t be read</span>'; }
-    fb.className='feedback'; fb.innerHTML=pills+extra+clearBtn;
+    // Each reference chip has its own \u00d7 for individual removal; clearing everything is the Reset button.
+    // No global "clear all" \u00d7 here, so references are only ever removed one at a time.
+    fb.className='feedback'; fb.innerHTML=pills+extra;
   } else if(committed && res.errors.length){
     fb.className='feedback err'; fb.innerHTML='<span class="pill">'+res.errors[0].error+'</span>'+clearBtn;
   } else { fb.innerHTML=''; }
+  fb.querySelectorAll('.pill-x').forEach(function(b){ b.onclick=function(){ removeRef(b.getAttribute('data-ref')); }; });
   var _c=document.getElementById('fbClear'); if(_c)_c.onclick=function(){refEl.value='';committed=false;renderResults();refEl.focus();};
   syncExamples();
   const nT=selected.length, nR=res.refs.length, total=nT*nR;
@@ -503,13 +506,19 @@ document.getElementById('copyAll').onclick=function(){
   copyText(lines.join('\n'),this,'Copied All');
 };
 document.getElementById('resetBtn').onclick=function(){
-  refEl.value=''; committed=false; selected=[];
+  refEl.value=''; committed=false; selected=[]; langFilter='';
+  var _sp=document.getElementById('searchPanel'); if(_sp)_sp.classList.remove('open');
+  buildLangModal(); syncLangReset();
   renderChips(); renderVList(); renderResults(); refEl.focus();
 };
 refEl.addEventListener('input',()=>{committed=false;renderResults();});
 refEl.addEventListener('keydown',e=>{if(e.key==='Enter'){committed=true;renderResults();}});
 function exSegs(){ return refEl.value.split(/[;\n]+|,(?=\s*(?:[1-3]\s*)?[A-Za-z])/).map(s=>s.trim()).filter(Boolean); }
 function exKey(str){ const p=parseRef(str); return (p&&p.ok)?p.usfm:str.toLowerCase().replace(/\s+/g,''); }
+function removeRef(usfm){
+  const segs=exSegs().filter(s=>exKey(s)!==usfm);
+  refEl.value=segs.join('; '); committed=false; renderResults(); refEl.focus();
+}
 function syncExamples(){
   const keys={}; exSegs().forEach(s=>{keys[exKey(s)]=1;});
   document.querySelectorAll('.examples b').forEach(b=>b.classList.toggle('on', !!keys[exKey(b.getAttribute('data-ex'))]));
