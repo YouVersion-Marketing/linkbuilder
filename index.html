@@ -160,6 +160,7 @@ header p{font-family:var(--sans);margin-top:20px;max-width:50ch;font-size:17px;l
 .btn:disabled:hover{background:var(--red);border-color:var(--red);box-shadow:none}
 
 .results-card{background:var(--white);border:1px solid var(--line);border-radius:18px;margin-top:13px;overflow:hidden}
+.results-card + .results-card{margin-top:44px}
 .result{position:relative;padding:20px 24px;display:grid;grid-template-columns:1fr auto;gap:14px 22px;align-items:center}
 .result:not(:last-child)::after{content:"";position:absolute;left:10%;right:10%;bottom:0;height:1px;background:var(--line)}
 .r-top{display:flex;align-items:baseline;gap:11px;margin-bottom:5px;flex-wrap:wrap}
@@ -478,8 +479,9 @@ function renderResults(){
   if(!nT){resultsEl.innerHTML='<div class="empty">Select at least one translation above.</div>';return;}
   if(!nR){resultsEl.innerHTML='<div class="empty">Enter a valid reference to generate links.</div>';return;}
   const ordered=[...popularIds.filter(id=>selected.includes(id)),...selected.filter(id=>!popularIds.includes(id))];
-  let rows='';
+  let cards='';
   res.refs.forEach(p=>{
+    let rows='';
     ordered.forEach(id=>{
       const v=byId[id]; if(!v)return;
       const url=buildURL(v,p.usfm);
@@ -489,8 +491,9 @@ function renderResults(){
         '<button class="icon-btn" data-copy="'+encodeURIComponent(url)+'">Copy Link</button>'+
         '<button class="icon-btn"><a href="'+url+'" target="_blank" rel="noopener">Open <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:1em;height:1em;vertical-align:-.12em;margin-left:.32em"><path d="M13 4a1 1 0 1 0 0 2h3.586l-7.293 7.293a1 1 0 0 0 1.414 1.414L18 7.414V11a1 1 0 1 0 2 0V5a1 1 0 0 0-1-1h-6Z"/><path d="M6 6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4a1 1 0 1 0-2 0v4H6V8h4a1 1 0 1 0 0-2H6Z"/></svg></a></button></div></div>';
     });
+    cards+='<div class="results-card">'+rows+'</div>';
   });
-  resultsEl.innerHTML='<div class="results-card">'+rows+'</div>';
+  resultsEl.innerHTML=cards;
   resultsEl.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copyText(decodeURIComponent(b.getAttribute('data-copy')),b,'Copied'));
 }
 function copyText(text,btn,doneLabel){
